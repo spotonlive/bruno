@@ -2,13 +2,21 @@
 
 namespace Optimus\Bruno;
 
+use JsonSerializable;
 use InvalidArgumentException;
-use Illuminate\Routing\Controller;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Router;
 use Optimus\Architect\Architect;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Controller;
+use Illuminate\Contracts\Support\Arrayable;
 
 abstract class LaravelController extends Controller
 {
+    /**
+     * Defaults
+     *
+     * @var array
+     */
     protected $defaults = [];
 
     /**
@@ -16,7 +24,7 @@ abstract class LaravelController extends Controller
      * @param  mixed  $data
      * @param  integer $statusCode
      * @param  array  $headers
-     * @return Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     protected function response($data, $statusCode = 200, array $headers = [])
     {
@@ -36,11 +44,17 @@ abstract class LaravelController extends Controller
      */
     protected function parseData($data, array $options, $key = null)
     {
-        $architect = new Architect;
+        $architect = new Architect();
 
         return $architect->parseData($data, $options['modes'], $key);
     }
 
+    /**
+     * Page sort
+     *
+     * @param array $sort
+     * @return array
+     */
     protected function parseSort(array $sort) {
         return array_map(function($sort) {
             if (!isset($sort['direction'])) {
@@ -81,7 +95,8 @@ abstract class LaravelController extends Controller
      * Parse filter group strings into filters
      * Filters are formatted as key:operator(value)
      * Example: name:eq(esben)
-     * @param  array  $filters
+     *
+     * @param array $filter_groups
      * @return array
      */
     protected function parseFilterGroups(array $filter_groups)
@@ -103,7 +118,7 @@ abstract class LaravelController extends Controller
 
             $return[] = [
                 'filters' => $filters,
-                'or' => isset($group['or']) ? $group['or'] : false
+                'or' => isset($group['or']) ? $group['or'] : false,
             ];
         }
 
@@ -112,6 +127,7 @@ abstract class LaravelController extends Controller
 
     /**
      * Parse GET parameters into resource options
+     *
      * @return array
      */
     protected function parseResourceOptions()
@@ -124,7 +140,7 @@ abstract class LaravelController extends Controller
             'limit' => null,
             'page' => null,
             'mode' => 'embed',
-            'filter_groups' => []
+            'filter_groups' => [],
         ], $this->defaults);
 
         $includes = $this->parseIncludes($request->get('includes', $this->defaults['includes']));
@@ -143,7 +159,19 @@ abstract class LaravelController extends Controller
             'sort' => $sort,
             'limit' => $limit,
             'page' => $page,
-            'filter_groups' => $filter_groups
+            'filter_groups' => $filter_groups,
         ];
+    }
+    /**
+     * Get router
+     *
+     * @return Router
+     */
+    public function getRouter()
+    {
+        /** @var Router $router */
+        $router = app(Router::class);
+
+        return $router;
     }
 }

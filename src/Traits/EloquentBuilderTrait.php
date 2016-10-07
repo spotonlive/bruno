@@ -1,13 +1,13 @@
 <?php
 
-namespace Optimus\Bruno;
+namespace Optimus\Bruno\Traits;
 
 use DB;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 trait EloquentBuilderTrait
 {
@@ -58,6 +58,12 @@ trait EloquentBuilderTrait
         return $query;
     }
 
+    /**
+     * @param Builder $query
+     * @param array $filterGroups
+     * @param array $previouslyJoined
+     * @return array
+     */
     protected function applyFilterGroups(Builder $query, array $filterGroups = [], array $previouslyJoined = [])
     {
         $joins = [];
@@ -79,6 +85,12 @@ trait EloquentBuilderTrait
         return $joins;
     }
 
+    /**
+     * @param Builder $query
+     * @param array $filter
+     * @param bool|false $or
+     * @param array $joins
+     */
     protected function applyFilter(Builder $query, array $filter, $or = false, array &$joins)
     {
         // $value, $not, $key, $operator
@@ -163,6 +175,12 @@ trait EloquentBuilderTrait
         }
     }
 
+    /**
+     * @param Builder $query
+     * @param array $sorting
+     * @param array $previouslyJoined
+     * @return array
+     */
     protected function applySorting(Builder $query, array $sorting, array $previouslyJoined = [])
     {
         $joins = [];
@@ -192,6 +210,11 @@ trait EloquentBuilderTrait
         return $joins;
     }
 
+    /**
+     * @param $type
+     * @param $key
+     * @return bool|string
+     */
     private function hasCustomMethod($type, $key)
     {
         $methodName = sprintf('%s%s', $type, Str::studly($key));
@@ -202,6 +225,10 @@ trait EloquentBuilderTrait
         return false;
     }
 
+    /**
+     * @param Builder $query
+     * @param $key
+     */
     private function joinRelatedModelIfExists(Builder $query, $key)
     {
         $model = $query->getModel();
