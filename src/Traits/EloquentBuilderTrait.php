@@ -13,65 +13,68 @@ trait EloquentBuilderTrait
 {
     /**
      * Apply resource options to a query builder
-     * @param  Builder $query
+     * @param  Builder $queryBuilder
      * @param  array  $options
      * @return Builder
      */
-    protected function applyResourceOptions(Builder $query, array $options = [])
+    protected function applyResourceOptions(Builder $queryBuilder, array $options = [])
     {
-        if (!empty($options)) {
-            extract($options);
-
-            if (isset($includes)) {
-                if (!is_array($includes)) {
-                    throw new InvalidArgumentException('Includes should be an array.');
-                }
-
-                $query->with($includes);
-            }
-
-            if (isset($filter_groups)) {
-                $filterJoins = $this->applyFilterGroups($query, $filter_groups);
-            }
-
-            if (isset($sort)) {
-                if (!is_array($sort)) {
-                    throw new InvalidArgumentException('Sort should be an array.');
-                }
-
-                if (!isset($filterJoins)) {
-                    $filterJoins = [];
-                }
-
-                $sortingJoins = $this->applySorting($query, $sort, $filterJoins);
-            }
-
-            if (isset($limit)) {
-                $query->limit($limit);
-            }
-
-            if (isset($page)) {
-                $query->offset($page*$limit);
-            }
+        if (empty($options)) {
+            return $queryBuilder;
         }
 
-        return $query;
+        extract($options);
+
+        if (isset($includes)) {
+            if (!is_array($includes)) {
+                throw new InvalidArgumentException('Includes should be an array.');
+            }
+
+            $queryBuilder->with($includes);
+        }
+
+        if (isset($filter_groups)) {
+            $filterJoins = $this->applyFilterGroups($queryBuilder, $filter_groups);
+        }
+
+        if (isset($sort)) {
+            if (!is_array($sort)) {
+                throw new InvalidArgumentException('Sort should be an array.');
+            }
+
+            if (!isset($filterJoins)) {
+                $filterJoins = [];
+            }
+
+            $sortingJoins = $this->applySorting($queryBuilder, $sort, $filterJoins);
+        }
+
+        if (isset($limit)) {
+            $queryBuilder->limit($limit);
+        }
+
+        if (isset($page)) {
+            $queryBuilder->offset($page * $limit);
+        }
+
+        return $queryBuilder;
     }
 
     /**
-     * @param Builder $query
+     * @param Builder $queryBuilder
      * @param array $filterGroups
      * @param array $previouslyJoined
      * @return array
      */
-    protected function applyFilterGroups(Builder $query, array $filterGroups = [], array $previouslyJoined = [])
+    protected function applyFilterGroups(Builder $queryBuilder, array $filterGroups = [], array $previouslyJoined = [])
     {
         $joins = [];
+
         foreach ($filterGroups as $group) {
             $or = $group['or'];
             $filters = $group['filters'];
 
-            $query->where(function (Builder $query) use ($filters, $or, &$joins) {
+            $queryBuilder->where(function (Builder $query) use ($filters, $or, &$joins) {
                 foreach ($filters as $filter) {
                     $this->applyFilter($query, $filter, $or, $joins);
                 }
@@ -79,29 +82,29 @@ trait EloquentBuilderTrait
         }
 
         foreach(array_diff($joins, $previouslyJoined) as $join) {
-            $this->joinRelatedModelIfExists($query, $join);
+            $this->joinRelatedModelIfExists($queryBuilder, $join);
         }
 
         return $joins;
     }
 
     /**
-     * @param Builder $query
+     * @param Builder $queryBuilder
      * @param array $filter
      * @param bool|false $or
      * @param array $joins
      */
-    protected function applyFilter(Builder $query, array $filter, $or = false, array &$joins)
+    protected function applyFilter(Builder $queryBuilder, array $filter, $or = false, array &$joins)
     {
         // $value, $not, $key, $operator
         extract($filter);
 
-        $table = $query->getModel()->getTable();
+        $table = $queryBuilder->getModel()->getTable();
 
         if ($value === 'null' || $value === '') {
             $method = $not ? 'WhereNotNull' : 'WhereNull';
 
-            call_user_func([$query, $method], sprintf('%s.%s', $table, $key));
+            call_user_func([$queryBuilder, $method], sprintf('%s.%s', $table, $key));
         } else {
             $method = $or === true ? 'orWhere' : 'where';
             $clauseOperator = null;
@@ -150,7 +153,7 @@ trait EloquentBuilderTrait
             $customFilterMethod = $this->hasCustomMethod('filter', $key);
             if ($customFilterMethod) {
                 call_user_func_array([$this, $customFilterMethod], [
-                    $query,
+                    $queryBuilder,
                     $method,
                     $clauseOperator,
                     $value,
@@ -163,11 +166,11 @@ trait EloquentBuilderTrait
             } else {
                 // In operations do not have an operator
                 if ($operator === 'in') {
-                    call_user_func_array([$query, $method], [
+                    call_user_func_array([$queryBuilder, $method], [
                         $databaseField, $value
                     ]);
                 } else {
-                    call_user_func_array([$query, $method], [
+                    call_user_func_array([$queryBuilder, $method], [
                         $databaseField, $clauseOperator, $value
                     ]);
                 }
@@ -176,12 +179,12 @@ trait EloquentBuilderTrait
     }
 
     /**
-     * @param Builder $query
+     * @param Builder $queryBuilder
      * @param array $sorting
      * @param array $previouslyJoined
      * @return array
      */
-    protected function applySorting(Builder $query, array $sorting, array $previouslyJoined = [])
+    protected function applySorting(Builder $queryBuilder, array $sorting, array $previouslyJoined = [])
     {
         $joins = [];
         foreach($sorting as $sortRule) {
@@ -197,14 +200,14 @@ trait EloquentBuilderTrait
             if ($customSortMethod) {
                 $joins[] = $key;
 
-                call_user_func([$this, $customSortMethod], $query, $direction);
+                call_user_func([$this, $customSortMethod], $queryBuilder, $direction);
             } else {
-                $query->orderBy($key, $direction);
+                $queryBuilder->orderBy($key, $direction);
             }
         }
 
         foreach(array_diff($joins, $previouslyJoined) as $join) {
-            $this->joinRelatedModelIfExists($query, $join);
+            $this->joinRelatedModelIfExists($queryBuilder, $join);
         }
 
         return $joins;
