@@ -203,8 +203,18 @@ trait DoctrineBuilderTrait
     protected function applySorting(QueryBuilder $queryBuilder, array $sorting)
     {
         foreach ($sorting as $sort) {
+            $key = $sort['key'];
+
+            if (strpos($key, '.') === false) {
+                $key = sprintf(
+                    '%s.%s',
+                    $this->getRootAlias(),
+                    $key
+                );
+            }
+
             $queryBuilder->addOrderBy(
-                $sort['key'],
+                $key,
                 $sort['direction']
             );
         }
