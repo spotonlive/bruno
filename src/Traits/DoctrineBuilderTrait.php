@@ -109,7 +109,7 @@ trait DoctrineBuilderTrait
             $filters = [];
 
             foreach ($group['filters'] as $filter) {
-                $paramKey = Str::random(8);
+                $paramKey = 'param' . Str::random(8);
 
                 $operator = $filter['operator'];
                 $key = $filter['key'];
@@ -188,10 +188,14 @@ trait DoctrineBuilderTrait
             // Expression
             $expr = ($or) ? 'orX' : 'andX';
 
+            /** @var \Doctrine\ORM\Query\Expr\Orx $expression */
+            $expression = $queryBuilder->expr()->$expr();
 
             foreach ($filters as $filter) {
-                $queryBuilder->where($queryBuilder->expr()->$expr($filter));
+                $expression->add($filter);
             }
+
+            $queryBuilder->andWhere($expression);
         }
 
         return $joins;
