@@ -53,15 +53,19 @@ trait DoctrineBuilderTrait
 
             if (count($includes)) {
                 foreach ($includes as $include) {
-                    $queryBuilder->addSelect($include)
-                        ->leftJoin(
-                            sprintf(
-                                '%s.%s',
-                                $this->getRootAlias(),
-                                $include
-                            ),
+                    if (strpos($include, '.') === false) {
+                        $include = sprintf(
+                            '%s.%s',
+                            $this->getRootAlias(),
                             $include
                         );
+                    }
+
+                    $key = explode(".", $include);
+                    $alias = $key[1];
+
+                    $queryBuilder->addSelect($alias)
+                        ->leftJoin($include, $alias);
                 }
             }
         }
@@ -106,7 +110,7 @@ trait DoctrineBuilderTrait
 
             foreach ($group['filters'] as $filter) {
                 $paramKey = Str::random(8);
-                
+
                 $operator = $filter['operator'];
                 $key = $filter['key'];
                 $value = $filter['value'];
@@ -137,7 +141,7 @@ trait DoctrineBuilderTrait
                             continue;
                         }
 
-                    $filters[] = $queryBuilder->expr()->like($key, ':' . $paramKey);
+                        $filters[] = $queryBuilder->expr()->like($key, ':' . $paramKey);
                         break;
 
                     case 'eq':
@@ -147,7 +151,7 @@ trait DoctrineBuilderTrait
                             continue;
                         }
 
-                    $filters[] = $queryBuilder->expr()->eq($key, ':' . $paramKey);
+                        $filters[] = $queryBuilder->expr()->eq($key, ':' . $paramKey);
                         break;
 
                     case 'gt':
