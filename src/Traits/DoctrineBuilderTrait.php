@@ -6,10 +6,7 @@ use DB;
 use Doctrine\ORM\QueryBuilder;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Optimus\Bruno\Exceptions\NoRootAlisException;
+use Optimus\Bruno\Exceptions\NoRootAliasException;
 
 trait DoctrineBuilderTrait
 {
@@ -21,12 +18,17 @@ trait DoctrineBuilderTrait
     protected $rootAlias = null;
 
     /**
+     * @var array
+     */
+    protected $includes = [];
+
+    /**
      * Apply resource options
      *
      * @param QueryBuilder $queryBuilder
      * @param array $options
      * @return QueryBuilder
-     * @throws NoRootAlisException
+     * @throws NoRootAliasException
      */
     protected function applyResourceOptions(QueryBuilder $queryBuilder, array $options = [])
     {
@@ -40,7 +42,7 @@ trait DoctrineBuilderTrait
 
         // Set root alias
         if (!is_array($rootAliases) || !isset($rootAliases[0])) {
-            throw new NoRootAlisException();
+            throw new NoRootAliasException();
         }
 
         $this->setRootAlias($rootAliases[0]);
@@ -53,19 +55,7 @@ trait DoctrineBuilderTrait
 
             if (count($includes)) {
                 foreach ($includes as $include) {
-                    if (strpos($include, '.') === false) {
-                        $include = sprintf(
-                            '%s.%s',
-                            $this->getRootAlias(),
-                            $include
-                        );
-                    }
-
-                    $key = explode(".", $include);
-                    $alias = $key[1];
-
-                    $queryBuilder->addSelect($alias)
-                        ->leftJoin($include, $alias);
+                    $this->includeRelation($include, $queryBuilder);
                 }
             }
         }
@@ -83,13 +73,45 @@ trait DoctrineBuilderTrait
 
         if (isset($limit)) {
             $queryBuilder->setMaxResults($limit);
-        }
 
-        if (isset($page)) {
-            $queryBuilder->setFirstResult($page * $limit);
+            if (isset($page)) {
+                $queryBuilder->setFirstResult($page * $limit);
+            }
         }
 
         return $queryBuilder;
+    }
+
+    /**
+     * Include relation
+     *
+     * @param string $include
+     * @param QueryBuilder $queryBuilder
+     * @return bool
+     */
+    protected function includeRelation($include, QueryBuilder $queryBuilder)
+    {
+        if (strpos($include, '.') === false) {
+            $include = sprintf(
+                '%s.%s',
+                $this->getRootAlias(),
+                $include
+            );
+        }
+
+        if (in_array($include, $this->includes)) {
+            return false;
+        }
+
+        $key = explode(".", $include);
+        $alias = $key[1];
+
+        $queryBuilder->addSelect($alias)
+            ->leftJoin($include, $alias);
+
+        $this->includes[] = $include;
+
+        return true;
     }
 
     /**
@@ -115,6 +137,19 @@ trait DoctrineBuilderTrait
                 $key = $filter['key'];
                 $value = $filter['value'];
                 $not = $filter['not'];
+
+                // Customer filter method
+                if ($customFilterMethod = $this->hasCustomFilter($key)) {
+                    call_user_func(
+                        [$this, $customFilterMethod],
+                        $queryBuilder,
+                        $operator,
+                        $value,
+                        $not
+                    );
+
+                    continue;
+                }
 
                 if (strpos($key, '.') === false) {
                     $key = sprintf(
@@ -199,6 +234,35 @@ trait DoctrineBuilderTrait
         }
 
         return $joins;
+    }
+
+    /**
+     * Check if repository has custom filter
+     *
+     * @param string $key
+     * @return bool|string
+     */
+    protected function hasCustomFilter($key)
+    {
+        return $this->hasCustomMethod('filter', $key);
+    }
+
+    /**
+     * Check if repository has custom method
+     *
+     * @param string $type
+     * @param string $key
+     * @return bool|string
+     */
+    private function hasCustomMethod($type, $key)
+    {
+        $methodName = sprintf('%s%s', $type, Str::studly($key));
+
+        if (method_exists($this, $methodName)) {
+            return $methodName;
+        }
+
+        return false;
     }
 
     /**

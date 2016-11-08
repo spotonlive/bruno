@@ -4,7 +4,7 @@ namespace Optimus\Bruno\Exceptions;
 
 use Exception;
 
-class NoRootAlisException extends Exception
+class NoRootAliasException extends Exception
 {
 
 }
