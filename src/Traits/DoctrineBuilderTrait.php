@@ -131,12 +131,13 @@ trait DoctrineBuilderTrait
             $filters = [];
 
             foreach ($group['filters'] as $filter) {
+                $useParamKey = true;
                 $paramKey = 'param' . Str::random(8);
 
                 $operator = $filter['operator'];
                 $key = $filter['key'];
                 $value = $filter['value'];
-                $not = isset($not) ? $group['not'] : false;
+                $not = isset($filter['not']) ? $filter['not'] : false;
 
                 // Customer filter method
                 if ($customFilterMethod = $this->hasCustomFilter($key)) {
@@ -182,7 +183,19 @@ trait DoctrineBuilderTrait
                     case 'eq':
                     default:
                         if ($not) {
+                            if (is_null($value)) {
+                                $filters[] = $queryBuilder->expr()->isNotNull($key);
+                                $useParamKey = false;
+                                continue;
+                            }
+
                             $filters[] = $queryBuilder->expr()->neq($key, ':' . $paramKey);
+                            continue;
+                        }
+
+                        if (is_null($value)) {
+                            $filters[] = $queryBuilder->expr()->isNull($key);
+                            $useParamKey = false;
                             continue;
                         }
 
@@ -217,7 +230,9 @@ trait DoctrineBuilderTrait
                         break;
                 }
 
-                $queryBuilder->setParameter($paramKey, $value);
+                if ($useParamKey) {
+                    $queryBuilder->setParameter($paramKey, $value);
+                }
             }
 
             // Expression
