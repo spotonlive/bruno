@@ -126,7 +126,7 @@ trait DoctrineBuilderTrait
         $joins = [];
 
         foreach ($filterGroups as $group) {
-            $or = $group['or'];
+            $or = isset($group['or']) ? $group['or'] : false;
 
             $filters = [];
 
@@ -136,7 +136,7 @@ trait DoctrineBuilderTrait
                 $operator = $filter['operator'];
                 $key = $filter['key'];
                 $value = $filter['value'];
-                $not = $filter['not'];
+                $not = isset($not) ? $group['not'] : false;
 
                 // Customer filter method
                 if ($customFilterMethod = $this->hasCustomFilter($key)) {
