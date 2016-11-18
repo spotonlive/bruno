@@ -55,7 +55,7 @@ trait DoctrineBuilderTrait
 
             if (count($includes)) {
                 foreach ($includes as $include) {
-                    $this->includeRelation($include, $queryBuilder);
+                    $this->includeRelation($include, $queryBuilder, true);
                 }
             }
         }
@@ -87,9 +87,10 @@ trait DoctrineBuilderTrait
      *
      * @param string $include
      * @param QueryBuilder $queryBuilder
+     * @param boolean $select
      * @return bool
      */
-    protected function includeRelation($include, QueryBuilder $queryBuilder)
+    protected function includeRelation($include, QueryBuilder $queryBuilder, $select = false)
     {
         if (strpos($include, '.') === false) {
             $include = sprintf(
@@ -106,8 +107,11 @@ trait DoctrineBuilderTrait
         $key = explode(".", $include);
         $alias = $key[1];
 
-        $queryBuilder->addSelect($alias)
-            ->leftJoin($include, $alias);
+        if ($select) {
+            $queryBuilder->addSelect($alias);
+        }
+
+        $queryBuilder->leftJoin($include, $alias);
 
         $this->includes[] = $include;
 
@@ -131,13 +135,12 @@ trait DoctrineBuilderTrait
             $filters = [];
 
             foreach ($group['filters'] as $filter) {
-                $useParamKey = true;
                 $paramKey = 'param' . Str::random(8);
 
                 $operator = $filter['operator'];
                 $key = $filter['key'];
                 $value = $filter['value'];
-                $not = isset($filter['not']) ? $filter['not'] : false;
+                $not = isset($group['not']) ? $group['not'] : false;
 
                 // Customer filter method
                 if ($customFilterMethod = $this->hasCustomFilter($key)) {
@@ -183,19 +186,7 @@ trait DoctrineBuilderTrait
                     case 'eq':
                     default:
                         if ($not) {
-                            if (is_null($value)) {
-                                $filters[] = $queryBuilder->expr()->isNotNull($key);
-                                $useParamKey = false;
-                                continue;
-                            }
-
                             $filters[] = $queryBuilder->expr()->neq($key, ':' . $paramKey);
-                            continue;
-                        }
-
-                        if (is_null($value)) {
-                            $filters[] = $queryBuilder->expr()->isNull($key);
-                            $useParamKey = false;
                             continue;
                         }
 
@@ -230,9 +221,7 @@ trait DoctrineBuilderTrait
                         break;
                 }
 
-                if ($useParamKey) {
-                    $queryBuilder->setParameter($paramKey, $value);
-                }
+                $queryBuilder->setParameter($paramKey, $value);
             }
 
             // Expression
