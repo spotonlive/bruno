@@ -162,6 +162,11 @@ trait DoctrineBuilderTrait
                         $this->getRootAlias(),
                         $key
                     );
+                } else {
+                    // Include relation referenced in filter
+                    $relation = explode(".", $key);
+
+                    $this->includeRelation($relation[0], $queryBuilder);
                 }
 
                 switch ($operator) {
