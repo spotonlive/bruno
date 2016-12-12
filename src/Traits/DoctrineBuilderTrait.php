@@ -75,7 +75,7 @@ trait DoctrineBuilderTrait
             $queryBuilder->setMaxResults($limit);
 
             if (isset($page)) {
-                $queryBuilder->setFirstResult($page * $limit);
+                $queryBuilder->setFirstResult(($page - 1) * $limit);
             }
         }
 
@@ -162,11 +162,6 @@ trait DoctrineBuilderTrait
                         $this->getRootAlias(),
                         $key
                     );
-                } else {
-                    // Include relation referenced in filter
-                    $relation = explode(".", $key);
-
-                    $this->includeRelation($relation[0], $queryBuilder);
                 }
 
                 switch ($operator) {
@@ -217,7 +212,7 @@ trait DoctrineBuilderTrait
                             continue;
                         }
 
-                        $filters[] = $queryBuilder->expr()->lt($key, ':' . $paramKey);
+                        $filters[] = $queryBuilder->expr()->gt($key, ':' . $paramKey);
                         break;
 
                     case 'lt':
@@ -226,7 +221,7 @@ trait DoctrineBuilderTrait
                             continue;
                         }
 
-                        $filters[] = $queryBuilder->expr()->gt($key, ':' . $paramKey);
+                        $filters[] = $queryBuilder->expr()->lt($key, ':' . $paramKey);
                         break;
 
                     case 'in':
