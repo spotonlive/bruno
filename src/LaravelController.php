@@ -132,7 +132,7 @@ abstract class LaravelController extends Controller
      */
     protected function parseResourceOptions()
     {
-        $request = $this->getRouter()->getCurrentRequest();
+        $request = $this->getRequest();
 
         $this->defaults = array_merge([
             'includes' => [],
@@ -162,6 +162,17 @@ abstract class LaravelController extends Controller
             'filter_groups' => $filter_groups,
         ];
     }
+
+    /**
+     * Get request
+     *
+     * @return \Illuminate\Http\Request
+     */
+    protected function getRequest()
+    {
+        return $this->getRouter()->getCurrentRequest();
+    }
+
     /**
      * Get router
      *

@@ -187,20 +187,32 @@ trait DoctrineBuilderTrait
                     case 'eq':
                     default:
                         if ($not) {
-                            if (is_null($value)) {
-                                $filters[] = $queryBuilder->expr()->isNotNull($key);
-                                $useParamKey = false;
-                                continue;
+                            if (!is_numeric($value) && !is_bool($value)) {
+                                if (
+                                    (!is_string($value) && is_null($value)) ||
+                                    (is_string($value) && $value == '') ||
+                                    ($value == 'NULL')
+                                ) {
+                                    $filters[] = $queryBuilder->expr()->isNotNull($key);
+                                    $useParamKey = false;
+                                    continue;
+                                }
                             }
 
                             $filters[] = $queryBuilder->expr()->neq($key, ':' . $paramKey);
                             continue;
                         }
 
-                        if (is_null($value)) {
-                            $filters[] = $queryBuilder->expr()->isNull($key);
-                            $useParamKey = false;
-                            continue;
+                        if (!is_numeric($value) && !is_bool($value)) {
+                            if (
+                                (!is_string($value) && is_null($value)) ||
+                                (is_string($value) && $value == '') ||
+                                ($value == 'NULL')
+                            ) {
+                                $filters[] = $queryBuilder->expr()->isNull($key);
+                                $useParamKey = false;
+                                continue;
+                            }
                         }
 
                         $filters[] = $queryBuilder->expr()->eq($key, ':' . $paramKey);
