@@ -328,6 +328,10 @@ trait DoctrineBuilderTrait
      */
     public function getRootAlias()
     {
+        if (!$this->roolAlias) {
+            return $this->getName();
+        }
+        
         return $this->rootAlias;
     }
 
