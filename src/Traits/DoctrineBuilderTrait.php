@@ -32,6 +32,8 @@ trait DoctrineBuilderTrait
      */
     protected function applyResourceOptions(QueryBuilder $queryBuilder, array $options = [])
     {
+        $this->resetRelations();
+        
         if (empty($options)) {
             return $queryBuilder;
         }
@@ -341,5 +343,13 @@ trait DoctrineBuilderTrait
     public function setRootAlias($rootAlias)
     {
         $this->rootAlias = $rootAlias;
+    }
+
+    /**
+     * Reset relations
+     */
+    private function resetRelations()
+    {
+        $this->includes = [];
     }
 }
