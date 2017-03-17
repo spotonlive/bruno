@@ -152,7 +152,8 @@ trait DoctrineBuilderTrait
                         $queryBuilder,
                         $operator,
                         $value,
-                        $not
+                        $not,
+                        $or
                     );
 
                     continue;
