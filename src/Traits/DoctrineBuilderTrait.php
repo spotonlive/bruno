@@ -3,6 +3,7 @@
 namespace Optimus\Bruno\Traits;
 
 use DB;
+use Doctrine\ORM\Query\Expr\Composite;
 use Doctrine\ORM\QueryBuilder;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -147,15 +148,15 @@ trait DoctrineBuilderTrait
 
                 // Customer filter method
                 if ($customFilterMethod = $this->hasCustomFilter($key)) {
-                    call_user_func(
+                    $expression = call_user_func(
                         [$this, $customFilterMethod],
                         $queryBuilder,
                         $operator,
                         $value,
-                        $not,
-                        $or
+                        $not
                     );
 
+                    $filters[] = $expression;
                     continue;
                 }
 
@@ -237,24 +238,6 @@ trait DoctrineBuilderTrait
                         }
 
                         $filters[] = $queryBuilder->expr()->lt($key, ':' . $paramKey);
-                        break;
-
-                    case 'gte':
-                        if ($not) {
-                            $filters[] = $queryBuilder->expr()->gte($key, ':' . $paramKey);
-                            continue;
-                        }
-
-                        $filters[] = $queryBuilder->expr()->gte($key, ':' . $paramKey);
-                        break;
-
-                    case 'lte':
-                        if ($not) {
-                            $filters[] = $queryBuilder->expr()->lte($key, ':' . $paramKey);
-                            continue;
-                        }
-
-                        $filters[] = $queryBuilder->expr()->lte($key, ':' . $paramKey);
                         break;
 
                     case 'in':
