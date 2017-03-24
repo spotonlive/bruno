@@ -231,6 +231,15 @@ trait DoctrineBuilderTrait
                         $filters[] = $queryBuilder->expr()->gt($key, ':' . $paramKey);
                         break;
 
+                    case 'gte':
+                        if ($not) {
+                            $filters[] = $queryBuilder->expr()->gte($key, ':' . $paramKey);
+                            continue;
+                        }
+
+                        $filters[] = $queryBuilder->expr()->gte($key, ':' . $paramKey);
+                        break;
+
                     case 'lt':
                         if ($not) {
                             $filters[] = $queryBuilder->expr()->lt($key, ':' . $paramKey);
@@ -238,6 +247,15 @@ trait DoctrineBuilderTrait
                         }
 
                         $filters[] = $queryBuilder->expr()->lt($key, ':' . $paramKey);
+                        break;
+
+                    case 'lte':
+                        if ($not) {
+                            $filters[] = $queryBuilder->expr()->lte($key, ':' . $paramKey);
+                            continue;
+                        }
+
+                        $filters[] = $queryBuilder->expr()->lte($key, ':' . $paramKey);
                         break;
 
                     case 'in':
