@@ -301,6 +301,17 @@ trait DoctrineBuilderTrait
     }
 
     /**
+     * Check if repository has a custom sorting method
+     *
+     * @param string $key
+     * @return bool|string
+     */
+    protected function hasCustomSort($key)
+    {
+        return $this->hasCustomMethod('sort', $key);
+    }
+
+    /**
      * Check if repository has custom method
      *
      * @param string $type
@@ -329,6 +340,17 @@ trait DoctrineBuilderTrait
     {
         foreach ($sorting as $sort) {
             $key = $sort['key'];
+
+            // Customer filter method
+            if ($customSortingMethod = $this->hasCustomSort($key)) {
+                $expression = call_user_func(
+                    [$this, $customSortingMethod],
+                    $queryBuilder,
+                    $sort['key'],
+                    $sort['direction'] ?? 'ASC'
+                );
+                continue;
+            }
 
             if (strpos($key, '.') === false) {
                 $key = sprintf(
