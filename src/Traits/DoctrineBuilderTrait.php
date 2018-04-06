@@ -66,12 +66,21 @@ trait DoctrineBuilderTrait
         if (isset($filter_groups)) {
             $this->applyFilterGroups($queryBuilder, $filter_groups);
         }
+
         if (isset($sort)) {
             if (!is_array($sort)) {
                 throw new InvalidArgumentException('Sort should be an array.');
             }
 
             $this->applySorting($queryBuilder, $sort);
+        }
+
+        if (isset($group_by)) {
+            if (!is_array($group_by)) {
+                throw new InvalidArgumentException('Group by should be an array.');
+            }
+
+            $this->applyGroupBy($queryBuilder, $group_by);
         }
 
         if (isset($limit)) {
@@ -363,6 +372,19 @@ trait DoctrineBuilderTrait
             $queryBuilder->addOrderBy(
                 $key,
                 $sort['direction']
+            );
+        }
+    }
+
+    /**
+     * @param QueryBuilder $queryBuilder
+     * @param array $groups
+     */
+    private function applyGroupBy(QueryBuilder $queryBuilder, array $groups)
+    {
+        foreach ($groups as $group) {
+            $queryBuilder->addGroupBy(
+                sprintf('%s.%s', $this->getRootAlias(), $group)
             );
         }
     }
