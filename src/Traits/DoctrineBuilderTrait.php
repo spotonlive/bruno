@@ -383,9 +383,17 @@ trait DoctrineBuilderTrait
     private function applyGroupBy(QueryBuilder $queryBuilder, array $groups)
     {
         foreach ($groups as $group) {
-            $queryBuilder->addGroupBy(
-                sprintf('%s.%s', $this->getRootAlias(), $group)
-            );
+            $key = $group;
+
+            if (strpos($key, '.') === false) {
+                $key = sprintf(
+                    '%s.%s',
+                    $this->getRootAlias(),
+                    $key
+                );
+            }
+
+            $queryBuilder->addGroupBy($key);
         }
     }
 
