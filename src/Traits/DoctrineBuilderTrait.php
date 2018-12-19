@@ -283,6 +283,10 @@ trait DoctrineBuilderTrait
                     $queryBuilder->setParameter($paramKey, $value);
                 }
             }
+            
+            if (!count($filters)) {
+                continue;
+            }
 
             // Expression
             $expr = ($or) ? 'orX' : 'andX';
