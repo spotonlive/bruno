@@ -165,7 +165,9 @@ trait DoctrineBuilderTrait
                         $not
                     );
 
-                    $filters[] = $expression;
+                    if ($expression) {
+                        $filters[] = $expression;
+                    }
                     continue;
                 }
 
