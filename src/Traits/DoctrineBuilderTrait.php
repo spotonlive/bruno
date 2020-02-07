@@ -193,7 +193,7 @@ trait DoctrineBuilderTrait
 
                         if ($not) {
                             $filters[] = $queryBuilder->expr()->notLike($key, ':' . $paramKey);
-                            continue;
+                            break;
                         }
 
                         $filters[] = $queryBuilder->expr()->like($key, ':' . $paramKey);
